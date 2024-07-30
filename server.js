@@ -28,7 +28,7 @@ db.once('open', () => {
     console.log('Connected to MongoDB Atlas');
 });
 
-app.use('/search', busRoutes);
+app.use('/', busRoutes);
 
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
