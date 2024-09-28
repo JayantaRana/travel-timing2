@@ -9,7 +9,8 @@ const busSchema = new mongoose.Schema({
     to: String,
     departureTime: String,  // Departure time
     route: String,          // Route
-    moreInfo: String        // More info
+    moreInfo: String,
+    cN:String// More info
 });
 
 const Bus = mongoose.model('Bus', busSchema);
