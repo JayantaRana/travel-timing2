@@ -72,10 +72,20 @@ router.get('/search', async (req, res) => {
     try {
         // Build query dynamically
         const query = {};
-        if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match
-        if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match
-        if (route) query.route = { $regex: new RegExp(route, 'i') }; // Match route keyword
-        if (keyword) query.moreInfo = { $regex: new RegExp(keyword, 'i') }; // Match in moreInfo
+
+        if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match for 'from'
+        if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match for 'to'
+        
+        // Search by bus name or route (depending on the user input)
+        if (route) query.route = { $regex: new RegExp(route, 'i') }; // Match the route keyword if provided
+        if (keyword) {
+            // This will search within the bus name, moreInfo, or any other relevant field
+            query.$or = [
+                { name: { $regex: new RegExp(keyword, 'i') } }, // Match bus name
+                { route: { $regex: new RegExp(keyword, 'i') } }, // Match route
+                { moreInfo: { $regex: new RegExp(keyword, 'i') } } // Match any additional info
+            ];
+        }
 
         let results = await Bus.find(query);
 
@@ -93,6 +103,7 @@ router.get('/search', async (req, res) => {
             return timeA.localeCompare(timeB);
         });
 
+        // Return results
         if (results.length === 0) {
             res.status(404).json({ message: 'No buses found matching your criteria.' });
         } else {
@@ -105,7 +116,6 @@ router.get('/search', async (req, res) => {
 });
 
 module.exports = router;
-
 
 
 
