@@ -151,12 +151,13 @@ router.get('/search', async (req, res) => {
         // Build query dynamically
         const query = {};
 
+        // Search by 'from' and 'to' locations
         if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match for 'from'
         if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match for 'to'
 
         // Handle SBSTC and Private filter checkboxes
         if (sbstcOnly === 'true' && privateOnly === 'true') {
-            // Show all buses
+            // Show all buses (no additional filtering needed)
         } else if (sbstcOnly === 'true') {
             query.name = 'SBSTC'; // Only show SBSTC buses
         } else if (privateOnly === 'true') {
@@ -172,7 +173,8 @@ router.get('/search', async (req, res) => {
             ];
         }
 
-        if (route) query.route = { $regex: new RegExp(route, 'i') }; // Match the route keyword if provided
+        // Search by route keyword
+        if (route) query.route = { $regex: new RegExp(route, 'i') };
 
         let results = await Bus.find(query);
 
@@ -203,7 +205,6 @@ router.get('/search', async (req, res) => {
 });
 
 module.exports = router;
-
 
 
 
