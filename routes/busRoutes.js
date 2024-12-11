@@ -148,23 +148,23 @@ router.get('/search', async (req, res) => {
     const { from, to, keyword, route, startTime, endTime, sbstcOnly, privateOnly } = req.query;
 
     try {
-        // Build query dynamically
+        // Initialize query object
         const query = {};
 
-        // Search by 'from' and 'to' locations
-        if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match for 'from'
-        if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match for 'to'
+        // Add 'from' and 'to' conditions
+        if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match
+        if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match
 
-        // Handle SBSTC and Private filter checkboxes
+        // Add filter conditions
         if (sbstcOnly === 'true' && privateOnly === 'true') {
-            // Show all buses (no additional filtering needed)
+            // No filter needed; show all buses
         } else if (sbstcOnly === 'true') {
-            query.name = 'SBSTC'; // Only show SBSTC buses
+            query.name = 'SBSTC'; // Only SBSTC buses
         } else if (privateOnly === 'true') {
             query.name = { $ne: 'SBSTC' }; // Exclude SBSTC buses
         }
 
-        // Search by keyword (bus name, route, or additional info)
+        // Add keyword search (name, route, moreInfo)
         if (keyword) {
             query.$or = [
                 { name: { $regex: new RegExp(keyword, 'i') } },
@@ -173,9 +173,12 @@ router.get('/search', async (req, res) => {
             ];
         }
 
-        // Search by route keyword
-        if (route) query.route = { $regex: new RegExp(route, 'i') };
+        // Add route keyword search
+        if (route) {
+            query.route = { $regex: new RegExp(route, 'i') };
+        }
 
+        // Fetch results from database
         let results = await Bus.find(query);
 
         // Filter by time range if provided
@@ -185,7 +188,7 @@ router.get('/search', async (req, res) => {
             );
         }
 
-        // Sort the results by converted departure time
+        // Sort results by departure time
         results.sort((a, b) => {
             const timeA = convertTo24Hour(a.departureTime);
             const timeB = convertTo24Hour(b.departureTime);
@@ -205,6 +208,7 @@ router.get('/search', async (req, res) => {
 });
 
 module.exports = router;
+
 
 
 
