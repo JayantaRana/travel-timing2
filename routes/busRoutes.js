@@ -118,31 +118,21 @@
 
 
 //update for both search and filter date - 11.12.2024
+
 const express = require('express');
 const router = express.Router();
-const Bus = require('../models/Bus');
+const Bus = require('./models/Bus'); // Assuming your Bus model is in the models directory
 
 router.get('/search', async (req, res) => {
     const { from, to, keyword, route, startTime, endTime, sbstcOnly, privateOnly } = req.query;
 
     try {
-        console.log('Received Query:', req.query);
-
         // Initialize query object
         const query = {};
 
-        // Add 'from' and 'to' conditions
+        // Add 'from' and 'to' filters
         if (from) query.from = { $regex: new RegExp(from, 'i') };
         if (to) query.to = { $regex: new RegExp(to, 'i') };
-
-        // Add filter conditions for SBSTC or private buses
-        if (sbstcOnly === 'true' && privateOnly === 'true') {
-            // Show all buses
-        } else if (sbstcOnly === 'true') {
-            query.name = 'SBSTC'; // Only SBSTC buses
-        } else if (privateOnly === 'true') {
-            query.name = { $ne: 'SBSTC' }; // Exclude SBSTC buses
-        }
 
         // Add keyword search (name, route, moreInfo)
         if (keyword) {
@@ -153,41 +143,66 @@ router.get('/search', async (req, res) => {
             ];
         }
 
-        // Add route keyword search
+        // Add route-specific filter
         if (route) {
             query.route = { $regex: new RegExp(route, 'i') };
         }
 
-        console.log('Constructed Query:', query);
+        // Filter by SBSTC or private buses
+        if (sbstcOnly === 'true') {
+            query.name = 'SBSTC';
+        } else if (privateOnly === 'true') {
+            query.name = { $ne: 'SBSTC' }; // Exclude SBSTC buses
+        }
 
-        // Fetch results from database
-        let results = await Bus.find(query);
+        // Fetch buses matching the query
+        let buses = await Bus.find(query);
 
-        // Filter by time range if provided
+        // Filter results by time range if both startTime and endTime are provided
         if (startTime && endTime) {
-            results = results.filter(bus =>
+            buses = buses.filter(bus =>
                 isWithinTimeRange(bus.departureTime, startTime, endTime)
             );
         }
 
         // Sort results by departure time
-        results.sort((a, b) => {
+        buses.sort((a, b) => {
             const timeA = convertTo24Hour(a.departureTime);
             const timeB = convertTo24Hour(b.departureTime);
             return timeA.localeCompare(timeB);
         });
 
         // Return results
-        if (results.length === 0) {
+        if (buses.length === 0) {
             res.status(404).json({ message: 'No buses found matching your criteria.' });
         } else {
-            res.json(results);
+            res.json(buses);
         }
     } catch (error) {
         console.error('Error in search route:', error);
         res.status(500).send({ error: 'An error occurred while searching for buses.' });
     }
 });
+
+/**
+ * Helper function to check if a time is within a range.
+ */
+function isWithinTimeRange(departureTime, startTime, endTime) {
+    const departure = convertTo24Hour(departureTime);
+    const start = convertTo24Hour(startTime);
+    const end = convertTo24Hour(endTime);
+    return departure >= start && departure <= end;
+}
+
+/**
+ * Helper function to convert 12-hour time to 24-hour time.
+ */
+function convertTo24Hour(time) {
+    const [hours, minutes] = time.match(/\d+/g).map(Number);
+    const isPM = time.toLowerCase().includes('pm');
+    return `${isPM && hours < 12 ? hours + 12 : hours}:${minutes < 10 ? '0' + minutes : minutes}`;
+}
+
 module.exports = router;
 
 
