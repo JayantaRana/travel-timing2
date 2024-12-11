@@ -185,6 +185,7 @@ router.get('/search', async (req, res) => {
         res.status(500).send({ error: 'An error occurred while searching for buses.' });
     }
 });
+module.exports = router;
 
 
 
