@@ -118,6 +118,9 @@
 
 
 //update for both search and filter date - 11.12.2024
+const express = require('express');
+const router = express.Router();
+const Bus = require('../models/Bus');
 
 router.get('/search', async (req, res) => {
     const { from, to, keyword, route, startTime, endTime, sbstcOnly, privateOnly } = req.query;
