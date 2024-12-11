@@ -119,45 +119,22 @@
 
 //update for both search and filter date - 11.12.2024
 
-const express = require('express');
-const router = express.Router();
-const Bus = require('../models/Bus');
-
-// Function to convert 12-hour format to 24-hour format
-function convertTo24Hour(time) {
-    const [hours, minutes, period] = time.match(/(\d+):(\d+)\s?(AM|PM)/i).slice(1);
-    let hours24 = parseInt(hours, 10);
-    if (period.toUpperCase() === 'PM' && hours24 < 12) {
-        hours24 += 12;
-    }
-    if (period.toUpperCase() === 'AM' && hours24 === 12) {
-        hours24 = 0;
-    }
-    return `${hours24.toString().padStart(2, '0')}:${minutes}`;
-}
-
-// Helper function for time comparison
-function isWithinTimeRange(time, start, end) {
-    const convertedTime = convertTo24Hour(time);
-    const startTime = convertTo24Hour(start);
-    const endTime = convertTo24Hour(end);
-    return convertedTime >= startTime && convertedTime <= endTime;
-}
-
 router.get('/search', async (req, res) => {
     const { from, to, keyword, route, startTime, endTime, sbstcOnly, privateOnly } = req.query;
 
     try {
+        console.log('Received Query:', req.query);
+
         // Initialize query object
         const query = {};
 
         // Add 'from' and 'to' conditions
-        if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match
-        if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match
+        if (from) query.from = { $regex: new RegExp(from, 'i') };
+        if (to) query.to = { $regex: new RegExp(to, 'i') };
 
-        // Add filter conditions
+        // Add filter conditions for SBSTC or private buses
         if (sbstcOnly === 'true' && privateOnly === 'true') {
-            // No filter needed; show all buses
+            // Show all buses
         } else if (sbstcOnly === 'true') {
             query.name = 'SBSTC'; // Only SBSTC buses
         } else if (privateOnly === 'true') {
@@ -177,6 +154,8 @@ router.get('/search', async (req, res) => {
         if (route) {
             query.route = { $regex: new RegExp(route, 'i') };
         }
+
+        console.log('Constructed Query:', query);
 
         // Fetch results from database
         let results = await Bus.find(query);
@@ -206,8 +185,6 @@ router.get('/search', async (req, res) => {
         res.status(500).send({ error: 'An error occurred while searching for buses.' });
     }
 });
-
-module.exports = router;
 
 
 
