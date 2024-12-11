@@ -67,7 +67,7 @@ function isWithinTimeRange(time, start, end) {
 }
 
 router.get('/search', async (req, res) => {
-    const { from, to, startTime, endTime, route, keyword } = req.query;
+    const { from, to, keyword, route, startTime, endTime } = req.query;
 
     try {
         // Build query dynamically
@@ -76,16 +76,15 @@ router.get('/search', async (req, res) => {
         if (from) query.from = { $regex: new RegExp(from, 'i') }; // Case-insensitive match for 'from'
         if (to) query.to = { $regex: new RegExp(to, 'i') }; // Case-insensitive match for 'to'
         
-        // Search by bus name or route (depending on the user input)
-        if (route) query.route = { $regex: new RegExp(route, 'i') }; // Match the route keyword if provided
+        // Search by bus name, route, or additional info (depending on the user input)
         if (keyword) {
-            // This will search within the bus name, moreInfo, or any other relevant field
             query.$or = [
                 { name: { $regex: new RegExp(keyword, 'i') } }, // Match bus name
                 { route: { $regex: new RegExp(keyword, 'i') } }, // Match route
                 { moreInfo: { $regex: new RegExp(keyword, 'i') } } // Match any additional info
             ];
         }
+        if (route) query.route = { $regex: new RegExp(route, 'i') }; // Match the route keyword if provided
 
         let results = await Bus.find(query);
 
