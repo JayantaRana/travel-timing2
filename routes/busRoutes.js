@@ -157,9 +157,25 @@ router.get('/search', async (req, res) => {
         if (route) query.route = { $regex: new RegExp(route, 'i') };
 
         // Apply filters
-        if (filterSBSTC === 'true') query.name = 'SBSTC';
-        if (filterPrivate === 'true') query.name = { $ne: 'SBSTC' };
-        if (filterSeatBooking === 'true') query.cN = { $exists: true, $ne: null };
+       const types = [];
+        if (filterSBSTC === 'true') types.push('SBSTC');
+        if (filterPrivate === 'true') types.push('Private');
+
+        if (types.length > 0) {
+            query.name = { $in: types }; // Include buses matching any selected types
+        }
+
+        // Apply seat booking filter
+        if (filterSeatBooking === 'true') {
+            query.cN = { $exists: true, $ne: null }; // Only buses with contact numbers
+        }
+
+
+
+            
+        // if (filterSBSTC === 'true') query.name = 'SBSTC';
+        // if (filterPrivate === 'true') query.name = { $ne: 'SBSTC' };
+        // if (filterSeatBooking === 'true') query.cN = { $exists: true, $ne: null };
 
         let results = await Bus.find(query);
 
