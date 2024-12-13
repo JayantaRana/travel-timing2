@@ -202,6 +202,11 @@ router.get('/search', async (req, res) => {
             );
         }
 
+   // Check if filters match
+        if (filteredBuses.length === 0) {
+            return res.json({ message: 'Filter not match.' });
+        }
+
         // Sort the results by converted departure time
         results.sort((a, b) => {
             const timeA = convertTo24Hour(a.departureTime);
