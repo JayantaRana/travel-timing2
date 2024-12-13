@@ -157,18 +157,7 @@ router.get('/search', async (req, res) => {
         if (route) query.route = { $regex: new RegExp(route, 'i') };
 
         // Apply filters
-       const types = [];
-        if (filterSBSTC === 'true') types.push('SBSTC');
-        if (filterPrivate === 'true') types.push('Private');
-
-        if (types.length > 0) {
-            query.name = { $in: types }; // Include buses matching any selected types
-        }
-
-        // Apply seat booking filter
-        if (filterSeatBooking === 'true') {
-            query.cN = { $exists: true, $ne: null }; // Only buses with contact numbers
-        }
+    
 
 
 
@@ -178,6 +167,33 @@ router.get('/search', async (req, res) => {
         // if (filterSeatBooking === 'true') query.cN = { $exists: true, $ne: null };
 
         let results = await Bus.find(query);
+
+///new
+            if (filterSBSTC === 'true') {
+            results = results.filter(bus => bus.name.toLowerCase() === 'sbstc');
+        }
+
+        // Filter for Private buses
+        if (filterPrivate === 'true') {
+           results =results.filter(bus => bus.name.toLowerCase() !== 'sbstc');
+        }
+
+        // Filter for buses with Seat Booking
+        if (filterSeatBooking === 'true') {
+           results = results.filter(bus => bus.cN); // Only buses with a contact number
+        }
+
+        // Combine filters
+        if (filterSBSTC === 'true' && filterPrivate === 'true') {
+           results = await Bus.find(query); // Re-fetch all buses matching the query
+            if (filterSeatBooking === 'true') {
+                results = results.filter(bus => bus.cN); // Only buses with a contact number
+            }
+        }
+
+
+            
+        
 
         // Filter by time range if provided
         if (startTime && endTime) {
